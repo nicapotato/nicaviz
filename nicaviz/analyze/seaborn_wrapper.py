@@ -1,7 +1,8 @@
 import seaborn as sns
+from wordcloud import WordCloud
 
 
-def multi_plot(col, ax, df, iti_palette, plotfunc, hue=None, top_n=10):
+def multi_plot(col, ax, df, iti_palette, plottype, hue=None, top_n=10):
     order = df[col].value_counts().index[:top_n]
     clean_col_name = col.replace("_", " ").title()
 
@@ -14,19 +15,20 @@ def multi_plot(col, ax, df, iti_palette, plotfunc, hue=None, top_n=10):
         ax.set_title("{} - {:.0f} Missing".format(clean_col_name,
                                                   df[col].isnull().sum()))
 
-    if plotfunc == sns.countplot:
+    if plottype == "countplot":
         pkwarg['alpha'] = 0.5
         pkwarg['edgecolor'] = "black"
         pkwarg['linewidth'] = 1
         pkwarg['order'] = order
         if hue:
             pkwarg['hue'] = hue
+        sns.countplot(data=df, y=col, ax=ax, **pkwarg)
 
-    if plotfunc == sns.boxplot:
+    if plottype == "boxplot":
         if hue:
             pkwarg["x"] = hue
+        sns.boxplot(data=df, y=col, ax=ax, **pkwarg)
 
-    plotfunc(data=df, y=col, ax=ax, **pkwarg)
     ax.set_ylabel(clean_col_name)
     ax.set_xlabel("Count")
     ax.spines['top'].set_visible(False)
