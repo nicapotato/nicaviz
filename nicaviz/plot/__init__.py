@@ -1,4 +1,2 @@
-from .categoricalplots import big_bar_cloud
-from .languageplots import big_word_cloud
-from .continuousplot import big_boxplotter
-from .describe import describe
+from .seaborn_grid_plotter import Plotgrid
+from .seaborn_wrapper import custom_distplot, plot_cloud, multi_plot, single_bar
