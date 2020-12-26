@@ -1,0 +1,1 @@
+from .dataframe_visualizer import NicaAccessor
