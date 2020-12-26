@@ -3,9 +3,9 @@ import pandas as pd
 
 
 # Data Exploration
-def describe(df, value_count_n=5):
+def describe_categorical(df, value_count_n=5):
     """
-    Custom Describe Function - More Tailored to categorical type variables..
+    Custom Describe Function for categorical variables
     """
     unique_count = []
     for x in df.columns:
@@ -16,8 +16,7 @@ def describe(df, value_count_n=5):
         value_count_string = []
 
         for vc_i in range(0, value_count_n):
-            value_count_string += ["ValCount {}".format(vc_i + 1),
-                                   "Occ"]
+            value_count_string += ["ValCount {}".format(vc_i + 1), "Occ"]
             if vc_i <= unique_values_count - 1:
                 value_count_list.append(value_count.index[vc_i])
                 value_count_list.append(value_count.iloc[vc_i])

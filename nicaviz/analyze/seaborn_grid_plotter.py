@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 
 
 class Plotgrid:
+    """
+    Class to plot matplotlib objects in a grid
+    """
     def __init__(self, plt_set, columns=2, figsize=None):
         self.columns = columns
         self.rows = self._calc_rows(len(plt_set), columns)
