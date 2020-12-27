@@ -2,3 +2,8 @@
 .DS_Store
 .iml
 .ipynb_checkpoints
+build/
+dist/
+.vscode
+nicaviz.egg-info/
+__pycache__

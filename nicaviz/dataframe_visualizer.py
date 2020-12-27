@@ -26,6 +26,36 @@ def pd_categorical_reduce(df, col, top_n_categories, strategy):
         raise "Invalid Strategy for pd_categorical_reduce()"
     return df
 
+# Data Exploration
+def describe_categorical(df, value_count_n=5):
+    """
+    Custom Describe Function for categorical variables
+    """
+    unique_count = []
+    for x in df.columns:
+        unique_values_count = df[x].nunique()
+        value_count = df[x].value_counts().iloc[:5]
+
+        value_count_list = []
+        value_count_string = []
+
+        for vc_i in range(0, value_count_n):
+            value_count_string += ["ValCount {}".format(vc_i + 1), "Occ"]
+            if vc_i <= unique_values_count - 1:
+                value_count_list.append(value_count.index[vc_i])
+                value_count_list.append(value_count.iloc[vc_i])
+            else:
+                value_count_list.append(np.nan)
+                value_count_list.append(np.nan)
+
+        unique_count.append([x,
+                             unique_values_count,
+                             df[x].isnull().sum(),
+                             df[x].dtypes] + value_count_list)
+
+    print("Dataframe Dimension: {} Rows, {} Columns".format(*df.shape))
+    return pd.DataFrame(unique_count, columns=["Column", "Unique", "Missing", "dtype"] + value_count_string).set_index("Column")
+
 @pd.api.extensions.register_dataframe_accessor("nica")
 class NicaAccessor(object):
     """
@@ -35,8 +65,26 @@ class NicaAccessor(object):
     def __init__(self, pandas_obj):
         self._obj = pandas_obj
 
-    def plot(self, plt_set, plottype, columns=2, figsize=None, palette=None, **kwargs):
-        self.gridparams(plt_set, columns, figsize, palette)
+    
+    def rank_correlations_plots(self, continuouscols, n, columns=3, polyorder=2, figsize=None, palette=None):
+        self.rank_df = self.get_corr_matrix(self._obj[continuouscols])
+        self.plt_set = [(x,y,cor) for x,y,cor in list(self.rank_df.iloc[:, :3].values) if x != y][:n]
+        self._gridparams(len(self.plt_set), columns, figsize, palette)
+
+        f, ax = plt.subplots(self.rows, self.columns, figsize=self.figsize)
+        # func, fkwargs = self._get_plot_func(plottype)
+        for i in range(0, self.n_plots):
+            ax = plt.subplot(self.rows, self.columns, i + 1)
+            if i < len(self.plt_set):
+                self.regplot(self.plt_set[i], ax, self._obj, polyorder=2)
+            else:
+                ax.axis('off')
+        plt.tight_layout(pad=1)
+    
+    def mass_plot(self, plt_set, plottype, columns=2, figsize=None, palette=None, **kwargs):
+        self._gridparams(len(plt_set), columns, figsize, palette)
+        self.plt_set = plt_set
+        
         f, ax = plt.subplots(self.rows, self.columns, figsize=self.figsize)
         for i in range(0, self.n_plots):
             ax = plt.subplot(self.rows, self.columns, i + 1)
@@ -47,12 +95,11 @@ class NicaAccessor(object):
                 ax.axis('off')
         plt.tight_layout(pad=1)
 
-    def gridparams(self, plt_set, columns=2, figsize=None, palette=None):
+    def _gridparams(self, plotlen, columns=2, figsize=None, palette=None):
         # Dimensions
         self.columns = columns
-        self.rows = self._calc_rows(len(plt_set), columns)
+        self.rows = self._calc_rows(plotlen, columns)
         self.n_plots = self.rows * self.columns
-        self.plt_set = plt_set
         self.figsize = figsize if figsize else self._estimate_figsize(self.columns, self.rows)
 
         # Colors
@@ -67,7 +114,7 @@ class NicaAccessor(object):
         return figsize
 
     def categorical_describe(self):
-        return self._obj.describe()
+        return describe_categorical(self._obj)
 
     def _get_plot_func(self, plottype):
         switcher = {
@@ -177,3 +224,17 @@ class NicaAccessor(object):
 
     def prepare_title(self, string):
         return string.replace("_", " ").title()
+
+    def get_corr_matrix(self, df):
+        continuous_rankedcorr = df.corr().unstack().drop_duplicates().reset_index()
+        continuous_rankedcorr.columns = ["f1", "f2", "Correlation Coefficient"]
+        continuous_rankedcorr['abs_cor'] = abs(continuous_rankedcorr["Correlation Coefficient"])
+        continuous_rankedcorr.sort_values(by='abs_cor', ascending=False, inplace=True)
+
+        return continuous_rankedcorr
+
+    def regplot(self, xy, ax, df, polyorder):
+        x, y, cor = xy
+        g = sns.regplot(x=x, y=y, data=df, order=polyorder, ax = ax, color=next(self.iti_palette))
+        ax.set_title('{} and {}'.format(x, y))
+        ax.text(0.18, 0.93, "Cor Coef: {:.2f}".format(cor), ha='center', va='center', transform=ax.transAxes)
