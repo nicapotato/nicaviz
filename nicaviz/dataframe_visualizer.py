@@ -167,14 +167,16 @@ class NicaAccessor(object):
         clean_col_name=self.prepare_title(col)
         missing=df[col].isnull().sum()
 
+        assert hue != col, "Hue cannot equal Col"
+
         if hue:
-            df=df.loc[:, [col, hue]].copy()
-            hue_cats=df[hue].value_counts().index[:top_n]
+            tmp=df.loc[:, [col, hue]].copy()
+            hue_cats=tmp[hue].value_counts().index[:top_n]
             clean_huecol_name=self.prepare_title(hue)
             for h in hue_cats:
-                pdf=df.loc[df[hue] == h, col]
+                pdf = tmp.loc[tmp[hue] == h, col]
                 pal = next(self.iti_palette)
-                sns.distplot(pdf, ax = ax, color = pal, kde_kws = {"color": pal, "lw": 2}, label = h)
+                sns.distplot(pdf, ax = ax, color = pal, kde_kws = {"color": pal, "lw": 2}, label = str(h))
             ax.set_title("{} by {} - {:.0f} Missing".format(clean_col_name, clean_huecol_name, missing))
             ax.legend()
         else:
