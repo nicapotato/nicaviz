@@ -66,7 +66,6 @@ class NicaAccessor(object):
     def __init__(self, pandas_obj):
         self._obj = pandas_obj
 
-    
     def rank_correlations_plots(self, continuouscols, n, columns=3, polyorder=2, figsize=None, palette=None):
         self.rank_df = self.get_corr_matrix(self._obj[continuouscols])
         self.plt_set = [(x,y,cor) for x,y,cor in list(self.rank_df.iloc[:, :3].values) if x != y][:n]
@@ -213,7 +212,6 @@ class NicaAccessor(object):
         ax.imshow(wordcloud, interpolation ='bilinear')
         ax.set_title(title, fontsize =18)
         ax.axis('off')
-
 
     def single_bar(self, col, ax, df, x_var):
         clean_col_name, clean_x_var_name= self.prepare_title(col), self.prepare_title(x_var)
