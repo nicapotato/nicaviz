@@ -8,3 +8,4 @@ dist/
 nicaviz.egg-info/
 __pycache__
 dev.ipynb
+bash-gen.sh

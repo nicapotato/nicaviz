@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="nicaviz",
-    version="0.0.2",
+    version="0.0.3",
     author="nicapotato",
     author_email="nick.brooks27@gmail.com",
     description="Python Visualization Package",
@@ -25,6 +25,6 @@ setuptools.setup(
         "seaborn>=0.9.0",
         "statsmodels>=0.9.0",
         "wordcloud>=1.8.1 "
-      ],
+    ],
     python_requires='>=3.5',
 )
