@@ -78,11 +78,10 @@ class NicaAccessor(object):
         self._gridparams(len(self.plt_set), columns, figsize, palette)
 
         f, ax = plt.subplots(self.rows, self.columns, figsize=self.figsize)
-        # func, fkwargs = self._get_plot_func(plottype)
         for i in range(0, self.n_plots):
             ax = plt.subplot(self.rows, self.columns, i + 1)
             if i < len(self.plt_set):
-                self.regplot(self.plt_set[i], ax, self._obj, polyorder=2)
+                self.regplot(self.plt_set[i], ax, polyorder=polyorder)
             else:
                 ax.axis('off')
         plt.tight_layout(pad=1)
@@ -96,7 +95,7 @@ class NicaAccessor(object):
             ax = plt.subplot(self.rows, self.columns, i + 1)
             if i < len(self.plt_set):
                 func, fkwargs = self._get_plot_func(plottype)
-                func(self.plt_set[i], ax, self._obj, **kwargs, **fkwargs)
+                func(self.plt_set[i], ax, **kwargs, **fkwargs)
             else:
                 ax.axis('off')
         plt.tight_layout(pad=1)
@@ -138,7 +137,8 @@ class NicaAccessor(object):
         func, fkwargs = switcher.get(plottype, lambda: "Invalid Plottype")
         return func, fkwargs
 
-    def multi_plot(self, col, ax, df, plottype, hue=None, top_n=10):
+    def multi_plot(self, col, ax, plottype, hue=None, top_n=10):
+        df = self._obj
         order = df[col].value_counts().index[:top_n]
         clean_col_name = self.prepare_title(col)
         missing = df[col].isnull().sum()
@@ -172,7 +172,8 @@ class NicaAccessor(object):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
-    def custom_distplot(self, col, ax, df, hue=None, top_n=10):
+    def custom_distplot(self, col, ax, hue=None, top_n=10):
+        df = self._obj
         valmin, valmax = df[col].min(), df[col].max()
         clean_col_name = self.prepare_title(col)
         missing = df[col].isnull().sum()
@@ -207,10 +208,12 @@ class NicaAccessor(object):
         if series.shape[0] == 0:
             return "EMPTY"
         else:
-            series = series.dropna().astype(str).str.lower().str.replace("none", "").str.title()
+            series = series.dropna().astype(str).str.lower()\
+                .str.replace("none", "").str.title()
             return " ".join(series)
 
-    def plot_cloud(self, col, ax, df, cmap="plasma"):
+    def plot_cloud(self, col, ax, cmap="plasma"):
+        df = self._obj
         missing = df[col].isnull().sum()
         clean_col_name = self.prepare_title(col)
         string = self.clean_str_arr(df[col].copy())
@@ -226,7 +229,8 @@ class NicaAccessor(object):
         ax.set_title(title, fontsize=18)
         ax.axis('off')
 
-    def single_bar(self, col, ax, df, x_var):
+    def single_bar(self, col, ax, x_var):
+        df = self._obj
         clean_col_name, clean_x_var_name = self.prepare_title(
             col), self.prepare_title(x_var)
         missing = df[col].isnull().sum()
@@ -237,36 +241,98 @@ class NicaAccessor(object):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
-    def ts_rolling(self, col, ax, df, x_var, rolling=False, r=0):
-        clean_col_name, clean_x_var_name = self.prepare_title(
-            col), self.prepare_title(x_var)
+    def ts_rolling_plot(self, df, ax, label=None, rolling=False, r=0):
 
         if rolling:
-            ts_plot = df.loc[:, [col, x_var]].set_index(x_var)
-            ts_plot = ts_plot.rolling(r).mean()
+            df = df.copy().rolling(r).mean()
 
-        ts_plot.dropna().plot(ax=ax, color=next(self.iti_palette), alpha=1, lw=2)
+        df.dropna().plot(
+            ax=ax,
+            color=next(self.iti_palette),
+            alpha=1,
+            lw=2,
+            label=label)
 
-        ax.set_xlabel(clean_col_name)
-        ax.set_ylabel(clean_x_var_name)
+    def ts_rolling(self, col, ax, x_var, hue=None, rolling=False, r=0):
+        df = self._obj
+        clean_col_name, clean_x_var_name = self.prepare_title(
+            col), self.prepare_title(x_var)
+        col_list = [col, x_var]
+
+        if hue:
+            hue_cat = df[hue].unique()
+            for h in hue_cat:
+                hue_ts_plot = df.loc[df[hue] == h, col_list].set_index(x_var)
+                self.ts_rolling_plot(hue_ts_plot, ax, h, rolling, r)
+            ax.legend()
+        else:
+            ts_plot = df.loc[:, col_list].set_index(x_var)
+            self.ts_rolling_plot(ts_plot, ax, None, rolling, r)
+
+        if rolling:
+            ax.set_title(
+                "{clean_col_name} Over {x_var} with rolling average {r}")
+        else:
+            ax.set_title("{clean_col_name} Over {x_var}")
+        ax.set_xlabel(clean_x_var_name)
+        ax.set_ylabel(clean_col_name)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.grid(True, lw=1, ls='--', c='.75')
 
-    def ts_resample(self, col, ax, df, resample=False, resample_interval="1D"):
+    def ts_resample_plot(self, df, ax, label=None):
+
+        df.dropna().plot(
+            ax=ax,
+            color=next(self.iti_palette),
+            alpha=1,
+            lw=2,
+            label=label)
+
+    def resample_data(self, df, col, hue=None, resample=False, resample_interval=None):
+        if resample:
+            if hue:
+                resampled_df = df[[col, hue]].reset_index().copy()
+                resampled_df['placeholder'] = "N/A"
+                resampled_df = resampled_df.set_index(col)\
+                    .groupby(hue)['placeholder']\
+                    .resample(resample_interval).count()\
+                    .reset_index().set_index(col)
+            else:
+                resampled_df = df[col].reset_index().copy()
+                resampled_df['placeholder'] = 1
+                resampled_df = resampled_df.set_index(col)\
+                    .resample(resample_interval)['placeholder'].count()
+            return resampled_df
+        else:
+            return df
+
+    def ts_resample(self, col, ax, hue=None, resample=False, resample_interval="1D"):
+        df = self._obj
         clean_col_name, clean_x_var_name = self.prepare_title(
             col), self.prepare_title(col)
 
+        if hue:
+            hue_ts_plot = self.resample_data(
+                df, col, hue, resample, resample_interval)
+            hue_cat = hue_ts_plot[hue].unique()
+            for h in hue_cat:
+                ts_plot = hue_ts_plot.loc[hue_ts_plot[hue] == h, 'placeholder']
+                self.ts_resample_plot(ts_plot, ax, h)
+            ax.legend()
+        else:
+            ts_plot = self.resample_data(
+                df, col, None, resample, resample_interval)
+            self.ts_resample_plot(ts_plot, ax, None)
+
         if resample:
-            ts_plot = df[col].reset_index().copy()
-            ts_plot['placeholder'] = "N/A"
-            ts_plot = ts_plot.set_index(col)['placeholder'].resample(
-                resample_interval).count()
-
-        ts_plot.dropna().plot(ax=ax, color=next(self.iti_palette), alpha=1, lw=2)
-
+            ax.set_title(
+                "{clean_x_var_name} Count by Interval {resample_interval}")
+        else:
+            ax.set_title("{clean_x_var_name} Count")
         ax.set_xlabel(clean_col_name)
-        ax.set_ylabel(clean_x_var_name)
+        ax.set_ylabel("{clean_x_var_name} Occurence")
+
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.grid(True, lw=1, ls='--', c='.75')
@@ -281,12 +347,11 @@ class NicaAccessor(object):
             continuous_rankedcorr["Correlation Coefficient"])
         continuous_rankedcorr.sort_values(
             by='abs_cor', ascending=False, inplace=True)
-
         return continuous_rankedcorr
 
-    def regplot(self, xy, ax, df, polyorder):
+    def regplot(self, xy, ax, polyorder):
         x, y, cor = xy
-        g = sns.regplot(x=x, y=y, data=df, order=polyorder,
+        g = sns.regplot(x=x, y=y, data=self._obj, order=polyorder,
                         ax=ax, color=next(self.iti_palette))
         ax.set_title('{} and {}'.format(x, y))
         ax.text(0.18, 0.93, "Cor Coef: {:.2f}".format(
