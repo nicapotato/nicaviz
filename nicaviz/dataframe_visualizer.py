@@ -8,6 +8,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
 
+sns_heatmap_colors = [
+    "Blues",
+    "Greens",
+    "Greys",
+    "Reds",
+    "Purples"
+]
+
 
 def pd_continuous_null_and_outliers(df, col, upper_percentile, lower_percentile=None):
     df = df.loc[df[col].notnull(), :]
@@ -242,10 +250,8 @@ class NicaAccessor(object):
         ax.spines['right'].set_visible(False)
 
     def ts_rolling_plot(self, df, ax, label=None, rolling=False, r=0):
-
         if rolling:
             df = df.copy().rolling(r).mean()
-
         df.dropna().plot(
             ax=ax,
             color=next(self.iti_palette),
@@ -271,9 +277,9 @@ class NicaAccessor(object):
 
         if rolling:
             ax.set_title(
-                "{clean_col_name} Over {x_var} with rolling average {r}")
+                "{} Over {} with rolling average {}".format(clean_col_name, x_var, r))
         else:
-            ax.set_title("{clean_col_name} Over {x_var}")
+            ax.set_title("{} Over {}".format(clean_col_name, x_var))
         ax.set_xlabel(clean_x_var_name)
         ax.set_ylabel(clean_col_name)
         ax.spines['top'].set_visible(False)
@@ -281,7 +287,6 @@ class NicaAccessor(object):
         ax.grid(True, lw=1, ls='--', c='.75')
 
     def ts_resample_plot(self, df, ax, label=None):
-
         df.dropna().plot(
             ax=ax,
             color=next(self.iti_palette),
@@ -327,11 +332,11 @@ class NicaAccessor(object):
 
         if resample:
             ax.set_title(
-                "{clean_x_var_name} Count by Interval {resample_interval}")
+                "{} Count by Interval {}".format(clean_x_var_name, resample_interval))
         else:
-            ax.set_title("{clean_x_var_name} Count")
+            ax.set_title("{} Count".format(clean_x_var_name))
         ax.set_xlabel(clean_col_name)
-        ax.set_ylabel("{clean_x_var_name} Occurence")
+        ax.set_ylabel("{} Occurence".format(clean_x_var_name))
 
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -356,3 +361,47 @@ class NicaAccessor(object):
         ax.set_title('{} and {}'.format(x, y))
         ax.text(0.18, 0.93, "Cor Coef: {:.2f}".format(
             cor), ha='center', va='center', transform=ax.transAxes)
+
+    def calc_cardinality(self, df, index_pivot, columns_pivot):
+        cols_nuniques = df[index_pivot + columns_pivot].nunique().values
+        cardinatlity = np.prod(cols_nuniques[cols_nuniques > 0])
+        return cardinatlity
+
+    def pivot_plots(self, categoricalcols, valuecol, aggfunc, columns=3, figsize=None, palette=sns_heatmap_colors):
+        self.plt_set = list(itertools.combinations(categoricalcols, 2))
+        self._gridparams(len(self.plt_set), columns, figsize, palette)
+
+        f, ax = plt.subplots(self.rows, self.columns, figsize=self.figsize)
+        for i in range(0, self.n_plots):
+            ax = plt.subplot(self.rows, self.columns, i + 1)
+            if i < len(self.plt_set):
+
+                index_pivot = [self.plt_set[i][0]]
+                columns_pivot = [self.plt_set[i][1]]
+                cardinatlity = self.calc_cardinality(
+                    self._obj, index_pivot, columns_pivot)
+                assert cardinatlity > 0, "Heatmap categories cardinality is zero"
+
+                pivot_df = pd.pivot_table(
+                    data=self._obj,
+                    values=valuecol,
+                    index=index_pivot,
+                    columns=columns_pivot,
+                    aggfunc=aggfunc)
+
+                cmap = next(self.iti_palette)
+                annot = True if cardinatlity < 50 else False
+                sns.heatmap(pivot_df, cmap=cmap, linewidths=.5, linecolor='black',
+                            annot=annot, fmt=".0f",
+                            cbar_kws={'label': 'Occurence Count'}, ax=ax)
+
+                clean_index_name = self.prepare_title(", ".join(index_pivot))
+                clean_column_name = self.prepare_title(", ".join(index_pivot))
+                ax.set_title("Pivot {} and {}".format(
+                    clean_index_name, clean_column_name))
+                ax.set_xlabel(clean_column_name + " Categories")
+                ax.set_ylabel(clean_index_name + " Categories")
+
+            else:
+                ax.axis('off')
+        plt.tight_layout(pad=1)
