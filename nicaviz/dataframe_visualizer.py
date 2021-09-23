@@ -277,9 +277,9 @@ class NicaAccessor(object):
 
         if rolling:
             ax.set_title(
-                "{clean_col_name} Over {x_var} with rolling average {r}")
+                "{} Over {} with rolling average {}".format(clean_col_name, x_var, r))
         else:
-            ax.set_title("{clean_col_name} Over {x_var}")
+            ax.set_title("{} Over {}".format(clean_col_name, x_var))
         ax.set_xlabel(clean_x_var_name)
         ax.set_ylabel(clean_col_name)
         ax.spines['top'].set_visible(False)
@@ -287,7 +287,6 @@ class NicaAccessor(object):
         ax.grid(True, lw=1, ls='--', c='.75')
 
     def ts_resample_plot(self, df, ax, label=None):
-
         df.dropna().plot(
             ax=ax,
             color=next(self.iti_palette),
@@ -333,11 +332,11 @@ class NicaAccessor(object):
 
         if resample:
             ax.set_title(
-                "{clean_x_var_name} Count by Interval {resample_interval}")
+                "{} Count by Interval {}".format(clean_x_var_name, resample_interval))
         else:
-            ax.set_title("{clean_x_var_name} Count")
+            ax.set_title("{} Count".format(clean_x_var_name))
         ax.set_xlabel(clean_col_name)
-        ax.set_ylabel("{clean_x_var_name} Occurence")
+        ax.set_ylabel("{} Occurence".format(clean_x_var_name))
 
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
