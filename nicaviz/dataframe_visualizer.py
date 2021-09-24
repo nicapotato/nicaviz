@@ -370,6 +370,7 @@ class NicaAccessor(object):
     def pivot_plots(self, categoricalcols, valuecol, aggfunc, columns=3, figsize=None, palette=sns_heatmap_colors):
         self.plt_set = list(itertools.combinations(categoricalcols, 2))
         self._gridparams(len(self.plt_set), columns, figsize, palette)
+        aggfuncrepr = repr(aggfunc).split(" ")[1]
 
         f, ax = plt.subplots(self.rows, self.columns, figsize=self.figsize)
         for i in range(0, self.n_plots):
@@ -393,13 +394,13 @@ class NicaAccessor(object):
                 annot = True if cardinatlity < 50 else False
                 sns.heatmap(pivot_df, cmap=cmap, linewidths=.5, linecolor='black',
                             annot=annot, fmt=".0f",
-                            cbar_kws={'label': 'Occurence Count'}, ax=ax)
+                            cbar_kws={'label': aggfuncrepr.title()}, ax=ax)
 
                 clean_index_name = self.prepare_title(", ".join(index_pivot))
                 clean_column_name = self.prepare_title(
                     ", ".join(columns_pivot))
-                ax.set_title("Pivot {} and {}".format(
-                    clean_index_name, clean_column_name))
+                ax.set_title("{} Pivot {} and {}".format(
+                    aggfuncrepr.title(), clean_index_name, clean_column_name))
                 ax.set_xlabel(clean_column_name + " Categories")
                 ax.set_ylabel(clean_index_name + " Categories")
 
