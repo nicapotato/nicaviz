@@ -396,7 +396,8 @@ class NicaAccessor(object):
                             cbar_kws={'label': 'Occurence Count'}, ax=ax)
 
                 clean_index_name = self.prepare_title(", ".join(index_pivot))
-                clean_column_name = self.prepare_title(", ".join(index_pivot))
+                clean_column_name = self.prepare_title(
+                    ", ".join(columns_pivot))
                 ax.set_title("Pivot {} and {}".format(
                     clean_index_name, clean_column_name))
                 ax.set_xlabel(clean_column_name + " Categories")
