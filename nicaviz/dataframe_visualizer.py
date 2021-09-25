@@ -155,10 +155,10 @@ class NicaAccessor(object):
             pkwarg = {"palette": self.palette}
             clean_hue_name = self.prepare_title(hue)
             ax.set_title(
-                "{} by {} - {:.0f} Missing".format(clean_col_name, clean_hue_name, missing))
+                "{} by {}\n{:.0f} Missing".format(clean_col_name, clean_hue_name, missing))
         else:
             pkwarg = {"color": next(self.iti_palette)}
-            ax.set_title("{} - {:.0f} Missing".format(clean_col_name, missing))
+            ax.set_title("{}\n{:.0f} Missing".format(clean_col_name, missing))
 
         if plottype == "countplot":
             pkwarg['alpha'] = 0.5
@@ -198,7 +198,7 @@ class NicaAccessor(object):
                 sns.distplot(pdf, ax=ax, color=pal, kde_kws={
                              "color": pal, "lw": 2}, label=str(h))
             ax.set_title(
-                "{} by {} - {:.0f} Missing".format(clean_col_name, clean_huecol_name, missing))
+                "{} by {}\n{:.0f} Missing".format(clean_col_name, clean_huecol_name, missing))
             ax.legend()
         else:
             sns.distplot(df[col], ax=ax, color=next(
@@ -225,7 +225,7 @@ class NicaAccessor(object):
         missing = df[col].isnull().sum()
         clean_col_name = self.prepare_title(col)
         string = self.clean_str_arr(df[col].copy())
-        title = "{} Wordcloud - {:.0f} Missing".format(clean_col_name, missing)
+        title = "{} Wordcloud\n{:.0f} Missing".format(clean_col_name, missing)
 
         wordcloud = WordCloud(width=800, height=500,
                               collocations=True,
@@ -245,7 +245,7 @@ class NicaAccessor(object):
         sns.barplot(data=df, x=x_var, y=col, ax=ax, color=next(
             self.iti_palette), linewidth=1, alpha=.8)
         ax.set_title(
-            "{} by {} - Missing {:.0f}".format(clean_col_name, clean_x_var_name, missing))
+            "{} by {}\nMissing {:.0f}".format(clean_col_name, clean_x_var_name, missing))
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
@@ -396,11 +396,13 @@ class NicaAccessor(object):
                             annot=annot, fmt=".0f",
                             cbar_kws={'label': aggfuncrepr.title()}, ax=ax)
 
+                clean_values_name = self.prepare_title(valuecol)
                 clean_index_name = self.prepare_title(", ".join(index_pivot))
                 clean_column_name = self.prepare_title(
                     ", ".join(columns_pivot))
-                ax.set_title("{} Pivot {} and {}".format(
-                    aggfuncrepr.title(), clean_index_name, clean_column_name))
+                ax.set_title("{} {}\nPivot by {} and {}".format(
+                    aggfuncrepr.title(), clean_values_name,
+                    clean_index_name, clean_column_name))
                 ax.set_xlabel(clean_column_name + " Categories")
                 ax.set_ylabel(clean_index_name + " Categories")
 
