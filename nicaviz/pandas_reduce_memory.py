@@ -54,8 +54,9 @@ def reduce_mem_usage(props, nan_fill=-1):
 
     # Print final result
     mem_usg = props.memory_usage().sum() / 1024**2
+    memory_reduce = 1-(mem_usg/start_mem_usg)
     print("DF Memory After   : {:15.2f} MB".format(mem_usg))
-    print("Reduced by        : {:15.2f} %".format(100*mem_usg/start_mem_usg))
+    print("Reduced by        : {:15.2f} %".format(100*memory_reduce))
 
     print("\nNumeric Columns with NAN replaced with {}:\n{}".format(nan_fill, NAlist))
     return props, NAlist
