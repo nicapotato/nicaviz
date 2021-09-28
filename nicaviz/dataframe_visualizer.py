@@ -169,14 +169,15 @@ class NicaAccessor(object):
             if hue:
                 pkwarg['hue'] = hue
             sns.countplot(data=df, y=col, ax=ax, **pkwarg)
+            ax.set_xlabel("Count")
 
         if plottype == "boxplot":
             if hue:
                 pkwarg["y"] = hue
             sns.boxplot(data=df, x=col, ax=ax, **pkwarg)
+            ax.set_xlabel("Value")
 
         ax.set_ylabel(clean_col_name)
-        ax.set_xlabel("Count")
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
