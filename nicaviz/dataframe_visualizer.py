@@ -16,6 +16,8 @@ sns_heatmap_colors = [
     "Purples"
 ]
 
+sns.set_style("whitegrid")
+
 
 def pd_continuous_null_and_outliers(df, col, upper_percentile, lower_percentile=None):
     df = df.loc[df[col].notnull(), :]
@@ -93,6 +95,7 @@ class NicaAccessor(object):
             else:
                 ax.axis('off')
         plt.tight_layout(pad=1)
+        return f
 
     def mass_plot(self, plt_set, plottype, columns=2, figsize=None, palette=None, **kwargs):
         self._gridparams(len(plt_set), columns, figsize, palette)
@@ -107,6 +110,7 @@ class NicaAccessor(object):
             else:
                 ax.axis('off')
         plt.tight_layout(pad=1)
+        return f
 
     def _gridparams(self, plotlen, columns=2, figsize=None, palette=None):
         # Dimensions
@@ -362,6 +366,7 @@ class NicaAccessor(object):
         ax.set_title('{} and {}'.format(x, y))
         ax.text(0.18, 0.93, "Cor Coef: {:.2f}".format(
             cor), ha='center', va='center', transform=ax.transAxes)
+        return g
 
     def calc_cardinality(self, df, index_pivot, columns_pivot):
         cols_nuniques = df[index_pivot + columns_pivot].nunique().values
@@ -410,3 +415,4 @@ class NicaAccessor(object):
             else:
                 ax.axis('off')
         plt.tight_layout(pad=1)
+        return f
