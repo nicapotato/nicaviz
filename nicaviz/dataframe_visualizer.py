@@ -254,9 +254,11 @@ class NicaAccessor(object):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
-    def ts_rolling_plot(self, df, ax, label=None, rolling=False, r=0):
+    def ts_rolling_plot(self, df, ax, time_resample, r, label=None, rolling=False):
         if rolling:
-            df = df.copy().rolling(r).mean()
+            # df = df.copy().rolling(r).mean()
+            df = df.copy().resample(time_resample).sum().dropna().rolling(
+                window=r, min_periods=1).mean()
         df.dropna().plot(
             ax=ax,
             color=next(self.iti_palette),
@@ -264,7 +266,7 @@ class NicaAccessor(object):
             lw=2,
             label=label)
 
-    def ts_rolling(self, col, ax, x_var, hue=None, rolling=False, r=0):
+    def ts_rolling(self, col, ax, x_var, hue=None, time_resample="1D", r=0, rolling=False):
         df = self._obj
         clean_col_name, clean_x_var_name = self.prepare_title(
             col), self.prepare_title(x_var)
@@ -274,11 +276,13 @@ class NicaAccessor(object):
             hue_cat = df[hue].unique()
             for h in hue_cat:
                 hue_ts_plot = df.loc[df[hue] == h, col_list].set_index(x_var)
-                self.ts_rolling_plot(hue_ts_plot, ax, h, rolling, r)
+                self.ts_rolling_plot(df=hue_ts_plot, ax=ax, label=h, rolling=rolling, r=r,
+                                     time_resample=time_resample)
             ax.legend()
         else:
             ts_plot = df.loc[:, col_list].set_index(x_var)
-            self.ts_rolling_plot(ts_plot, ax, None, rolling, r)
+            self.ts_rolling_plot(
+                df=ts_plot, ax=ax, label=None, rolling=rolling, r=r, time_resample=time_resample,)
 
         if rolling:
             ax.set_title(
@@ -363,7 +367,7 @@ class NicaAccessor(object):
         x, y, cor = xy
         g = sns.regplot(x=x, y=y, data=self._obj, order=polyorder,
                         ax=ax, color=next(self.iti_palette))
-        ax.set_title('{} and {}'.format(x, y))
+        ax.set_title('{}\nvs {}'.format(x, y))
         ax.text(0.18, 0.93, "Cor Coef: {:.2f}".format(
             cor), ha='center', va='center', transform=ax.transAxes)
         return g
